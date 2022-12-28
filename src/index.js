@@ -23,6 +23,8 @@ const INITIAL_BIRD_POSITION = { x: config.width / 10, y: config.height / 2 }
 let bird = null;
 let upperPipe = null;
 let lowerPipe = null;
+const pipeVerticalDistanceRange = [150, 250];
+let pipeVerticalDistance = Phaser.Math.Between(...pipeVerticalDistanceRange);
 
 function preload() {
   this.load.image('sky', 'assets/sky.png');
@@ -37,7 +39,7 @@ function create() {
   bird.body.gravity.y = 400;
 
   upperPipe = this.physics.add.sprite(400, 100, 'pipe').setOrigin(0, 1);
-  lowerPipe = this.physics.add.sprite(400, (upperPipe.y + 100), 'pipe').setOrigin(0, 0);
+  lowerPipe = this.physics.add.sprite(400, (upperPipe.y + pipeVerticalDistance), 'pipe').setOrigin(0, 0);
 
   this.input.on('pointerdown', flap);
   this.input.keyboard.on('keydown_SPACE', flap);
