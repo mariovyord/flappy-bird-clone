@@ -173,11 +173,11 @@ export class PlayScene extends BaseScene {
   }
 
   increaseDifficulty() {
-    if (this.score === 3) {
+    if (this.score === 20) {
       this.currentDifficulty = "normal";
     }
 
-    if (this.score === 5) {
+    if (this.score === 40) {
       this.currentDifficulty = "hard";
     }
   }
