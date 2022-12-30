@@ -1,47 +1,41 @@
 import Phaser from 'phaser';
+import { BaseScene } from './BaseScene';
 
 const PIPES_TO_RENDER = 4;
 
-export class PlayScene extends Phaser.Scene {
+export class PlayScene extends BaseScene {
 
     constructor(config) {
-    super('PlayScene');
+    super('PlayScene', config);
     this.config = config;
 
     this.bird = null;
     this.pipes = null;
+    this.isPaused = false;
 
     this.pipeHorizontalDistance = 0;
     this.pipeVerticalDistanceRange = [150, 250];
     this.pipeHorizontalDistanceRange = [500, 550];
     this.flapVelocity = 300;
-
+    
     this.score = 0;
     this.scoreText = '';
   }
 
-  preload() {
-    this.load.image('sky', 'assets/sky.png');
-    this.load.image('bird', 'assets/bird.png');
-    this.load.image('pipe', 'assets/pipe.png');
-  }
-
   create() {
-    this.createBackground();
+    super.create();
     this.createBird();
     this.createPipes();
     this.createColliders();
     this.createScore();
+    this.createPause();
     this.handleInputs();
+    this.listenToEvents()
   }
 
   update() {
     this.checkGameStatus();
     this.recyclePipes();
-  }
-
-  createBackground() {
-    this.add.image(0, 0, 'sky').setOrigin(0);
   }
 
     createBird() {
@@ -85,9 +79,48 @@ export class PlayScene extends Phaser.Scene {
       });
     }
 
+    createPause() {
+      const pauseBtn = this.add
+        .image(this.config.width - 10, this.config.height - 10, 'pause')
+        .setScale(2)
+        .setOrigin(1)
+        .setInteractive();
+
+      pauseBtn.on('pointerdown', () => {
+        this.physics.pause();
+        this.scene.pause();
+        this.scene.launch('PauseScene');
+        this.isPaused = true;
+      })
+    }
+
     handleInputs() {
         this.input.on('pointerdown', this.flap, this);
         this.input.keyboard.on('keydown_SPACE', this.flap, this);
+    }
+
+    listenToEvents() {
+      if (this.pauseEvent) { return; }
+
+      this.pauseEvent = this.events.on('resume', () => {
+        this.initialTime = 3;
+        this.countdownText = this.add.text(...this.screenCenter, 'Fly in: ' + this.initialTime, this.fontOptions).setOrigin(0.5);
+        this.timedEvent = this.time.addEvent({
+          delay: 1000,
+          callback: () => {
+            this.initialTime--;
+            this.countdownText.setText('Fly in ' + this.initialTime)
+            if (this.initialTime <= 0) {
+              this.countdownText.setText('')
+              this.physics.resume();
+              this.timedEvent.remove();
+              this.isPaused = false;
+            }
+          },
+          callbackScope: this,
+          loop: true,
+        })
+      })
     }
 
     checkGameStatus() {
@@ -158,7 +191,9 @@ export class PlayScene extends Phaser.Scene {
   }
 
   flap() {
-    this.bird.body.velocity.y = -this.flapVelocity;
+    if (this.isPaused === false) {
+      this.bird.body.velocity.y = -this.flapVelocity;
+    }
   }
 
   increaseScore() {
